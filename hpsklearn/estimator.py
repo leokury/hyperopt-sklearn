@@ -445,6 +445,7 @@ class hyperopt_estimator(BaseEstimator):
                  seed=None,
                  use_partial_fit=False,
                  refit=True,
+                 trails=None
                  ):
         """
         Parameters
@@ -525,6 +526,7 @@ class hyperopt_estimator(BaseEstimator):
         self.fit_increment_dump_filename = fit_increment_dump_filename
         self.use_partial_fit = use_partial_fit
         self.refit = refit
+        self.trials = trials
         if space is None:
             if classifier is None and regressor is None:
                 self.classification = True
@@ -620,6 +622,7 @@ class hyperopt_estimator(BaseEstimator):
             self._best_loss = float('inf')
         else:
             assert hasattr(self, 'trials')
+            self._best_loss = self.trials.best_trial["result"]["loss"]
         # self._best_loss = float('inf')
         # This is where the cost function is used.
         fn = partial(_cost_fn,
