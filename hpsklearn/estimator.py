@@ -445,7 +445,7 @@ class hyperopt_estimator(BaseEstimator):
                  seed=None,
                  use_partial_fit=False,
                  refit=True,
-                 trails=None
+                 trials=None
                  ):
         """
         Parameters
