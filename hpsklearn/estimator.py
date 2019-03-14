@@ -526,7 +526,8 @@ class hyperopt_estimator(BaseEstimator):
         self.fit_increment_dump_filename = fit_increment_dump_filename
         self.use_partial_fit = use_partial_fit
         self.refit = refit
-        self.trials = trials
+        if not trials is None:
+            self.trials = trials
         if space is None:
             if classifier is None and regressor is None:
                 self.classification = True
