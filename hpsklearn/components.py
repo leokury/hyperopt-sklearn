@@ -33,6 +33,7 @@ def sklearn_SVC(*args, **kwargs):
 def sklearn_SVR(*args, **kwargs):
     return sklearn.svm.SVR(*args, **kwargs)
 
+
 @scope.define
 def ts_LagSelector(*args, **kwargs):
     return lagselectors.LagSelector(*args, **kwargs)
@@ -511,8 +512,8 @@ def svc_kernel(name, kernel, random_state=None, probability=False, **kwargs):
 
     hp_space = _svm_hp_space(_name, kernel=kernel, **kwargs)
     hp_space.update(_svc_hp_space(_name, random_state, probability))
-    return scope.sklearn_SVC(**hp_space)
-
+    return scope.sklearn_SVC(**hp_space
+)
 def svc_linear(name, **kwargs):
     '''Simply use the svc_kernel function with kernel fixed as linear to
     return an SVC object.
@@ -554,7 +555,7 @@ def svc(name, kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
 ########################################
 ##==== SVM regressor constructors ====##
 ########################################
-def svr_kernel(name, kernel, epsilon=None, **kwargs):
+def svr_kernel(name, kernel, epsilon=None, bagging=False, n_estimators = 4, n_jobs=1, **kwargs):
     """
     Return a pyll graph with hyperparamters that will construct
     a sklearn.svm.SVR model with a user specified kernel.
@@ -570,38 +571,41 @@ def svr_kernel(name, kernel, epsilon=None, **kwargs):
 
     hp_space = _svm_hp_space(_name, kernel=kernel, **kwargs)
     hp_space.update(_svr_hp_space(_name, epsilon))
-    return scope.sklearn_SVR(**hp_space)
+    if bagging:
+    	return sklearn.ensemble.BaggingRegressor(scope.sklearn_SVR(**hp_space), max_samples=1.0/n_estimators, n_estimators=n_estimators, n_jobs=n_jobs)
+    else:
+    	return scope.sklearn_SVR(**hp_space)
 
-def svr_linear(name, **kwargs):
+def svr_linear(name, bagging=False, n_estimators=4, n_jobs=1, **kwargs):
     '''Simply use the svr_kernel function with kernel fixed as linear to
     return an SVR object.
     '''
-    return svr_kernel(name, kernel='linear', **kwargs)
+    return svr_kernel(name, kernel='linear', bagging=bagging, n_estimators=n_estimators, n_jobs=n_jobs, **kwargs)
 
-def svr_rbf(name, **kwargs):
+def svr_rbf(name, bagging=False, n_estimators=4, n_jobs=1, **kwargs):
     '''Simply use the svr_kernel function with kernel fixed as rbf to
     return an SVR object.
     '''
-    return svr_kernel(name, kernel='rbf', **kwargs)
+    return svr_kernel(name, kernel='rbf', bagging=bagging, n_estimators=n_estimators, n_jobs=n_jobs, **kwargs)
 
-def svr_poly(name, **kwargs):
+def svr_poly(name, bagging=False, n_estimators=4, n_jobs=1, **kwargs):
     '''Simply use the svr_kernel function with kernel fixed as poly to
     return an SVR object.
     '''
-    return svr_kernel(name, kernel='poly', **kwargs)
+    return svr_kernel(name, kernel='poly', bagging=bagging, n_estimators=n_estimators, n_jobs=n_jobs, **kwargs)
 
-def svr_sigmoid(name, **kwargs):
+def svr_sigmoid(name, bagging=False, n_estimators=4, n_jobs=1, **kwargs):
     '''Simply use the svr_kernel function with kernel fixed as sigmoid to
     return an SVR object.
     '''
-    return svr_kernel(name, kernel='sigmoid', **kwargs)
+    return svr_kernel(name, kernel='sigmoid', bagging=bagging, n_estimators=n_estimators, n_jobs=n_jobs, **kwargs)
 
-def svr(name, kernels=['linear', 'rbf', 'poly', 'sigmoid'], **kwargs):
+def svr(name, kernels=['linear', 'rbf', 'poly', 'sigmoid'], bagging=False, n_estimators=4, n_jobs=1, **kwargs):
     svms = {
-        'linear': partial(svr_linear, name=name),
-        'rbf': partial(svr_rbf, name=name),
-        'poly': partial(svr_poly, name=name),
-        'sigmoid': partial(svr_sigmoid, name=name),
+        'linear': partial(svr_linear, name=name, bagging=bagging, n_estimators=n_estimators, n_jobs=n_jobs),
+        'rbf': partial(svr_rbf, name=name, bagging=bagging, n_estimators=n_estimators, n_jobs=n_jobs),
+        'poly': partial(svr_poly, name=name, bagging=bagging, n_estimators=n_estimators, n_jobs=n_jobs),
+        'sigmoid': partial(svr_sigmoid, name=name, bagging=bagging, n_estimators=n_estimators, n_jobs=n_jobs),
     }
     choices = [svms[kern](**kwargs) for kern in kernels]
     if len(choices) == 1:
