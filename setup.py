@@ -13,7 +13,7 @@ except ImportError:
 
 setup(
     name = "hpsklearn",
-    version = '0.0.5',
+    version = '0.0.6',
     packages = find_packages(),
     scripts = [],
     url = 'http://hyperopt.github.com/hyperopt-sklearn/',

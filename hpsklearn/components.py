@@ -33,6 +33,10 @@ def sklearn_SVC(*args, **kwargs):
 def sklearn_SVR(*args, **kwargs):
     return sklearn.svm.SVR(*args, **kwargs)
 
+@scope.define
+def sklearn_BaggingSVR(n_estimators=4, n_jobs=1, *args, **kwargs):
+    return sklearn.ensemble.BaggingRegressor(sklearn.svm.SVR(*args, **kwargs), n_estimators = n_estimators, max_samples = 1.0/n_estimators, n_jobs=n_jobs)
+
 
 @scope.define
 def ts_LagSelector(*args, **kwargs):
@@ -572,7 +576,7 @@ def svr_kernel(name, kernel, epsilon=None, bagging=False, n_estimators = 4, n_jo
     hp_space = _svm_hp_space(_name, kernel=kernel, **kwargs)
     hp_space.update(_svr_hp_space(_name, epsilon))
     if bagging:
-    	return sklearn.ensemble.BaggingRegressor(scope.sklearn_SVR(**hp_space), max_samples=1.0/n_estimators, n_estimators=n_estimators, n_jobs=n_jobs)
+    	return scope.sklearn_BaggingSVR(n_estimators=n_estimators, n_jobs=n_jobs, **hp_space)
     else:
     	return scope.sklearn_SVR(**hp_space)
 
@@ -580,7 +584,7 @@ def svr_linear(name, bagging=False, n_estimators=4, n_jobs=1, **kwargs):
     '''Simply use the svr_kernel function with kernel fixed as linear to
     return an SVR object.
     '''
-    return svr_kernel(name, kernel='linear', bagging=bagging, n_estimators=n_estimators, n_jobs=n_jobs, **kwargs)
+    return svr_kernel(name, kernel='linear', bagging=bagging, n_estimators=n_estimators, n_jobs=n_jobs,**kwargs)
 
 def svr_rbf(name, bagging=False, n_estimators=4, n_jobs=1, **kwargs):
     '''Simply use the svr_kernel function with kernel fixed as rbf to

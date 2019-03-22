@@ -13,19 +13,20 @@ class TestRegression(unittest.TestCase):
 
     def setUp(self):
         np.random.seed(123)
-        self.X_train = np.random.randn(1000, 2)
+        self.X_train = np.random.randn(100, 2)
         self.Y_train = self.X_train[:, 0] * 2
-        self.X_test = np.random.randn(1000, 2)
+        self.X_test = np.random.randn(100, 2)
         self.Y_test = self.X_test[:, 0] * 2
 
 def create_function(reg_fn):
     def test_regressor(self):
         model = hyperopt_estimator(
-            regressor=reg_fn('regressor'),
+            regressor=reg_fn('regressor', bagging=True, n_estimators=4, n_jobs=-1),
             preprocessing=[],
             algo=rand.suggest,
             trial_timeout=5.0,
-            max_evals=5,
+            max_evals=2,
+            verbose=True
         )
         model.fit(self.X_train, self.Y_train)
         model.score(self.X_test, self.Y_test)
@@ -37,18 +38,6 @@ def create_function(reg_fn):
 # List of regressors to test
 regressors = [
     components.svr,
-    components.svr_linear,
-    components.svr_rbf,
-    components.svr_poly,
-    components.svr_sigmoid,
-    components.knn_regression,
-    components.ada_boost_regression,
-    components.gradient_boosting_regression,
-    components.random_forest_regression,
-    components.extra_trees_regression,
-    components.sgd_regression,
-    components.lasso,
-    components.elasticnet,
 ]
 
 
@@ -60,18 +49,7 @@ for reg in regressors:
         create_function(reg)
     )
 
-# Only test the xgboost regressor if the optional dependency is installed
-try:
-    import xgboost
-except ImportError:
-    xgboost = None
 
-if xgboost is not None:
-    setattr(
-        TestRegression,
-        'test_{0}'.format(clf.__name__),
-        create_function(components.xgboost_regression)
-    )
 
 if __name__ == '__main__':
     unittest.main()
