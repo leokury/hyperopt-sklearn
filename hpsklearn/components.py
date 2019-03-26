@@ -22,6 +22,11 @@ try:
 except ImportError:
     xgboost = None
 
+try:
+	import lightgbm
+except ImportError:
+	lightgbm = None
+
 ##########################################
 ##==== Wrappers for sklearn modules ====##
 ##########################################
@@ -117,6 +122,12 @@ def sklearn_XGBRegressor(*args, **kwargs):
     if xgboost is None:
         raise ImportError('No module named xgboost')
     return xgboost.XGBRegressor(*args, **kwargs)
+
+@scope.define
+def sklearn_LGBMRegressor(*args, **kwargs):
+    if lightgbm is None:
+        raise ImportError('No module named lightgbm')
+    return lightgbm.sklearn.LGBMRegressor(*args, **kwargs)
 
 # @scope.define
 # def sklearn_Ridge(*args, **kwargs):
@@ -1243,6 +1254,108 @@ def sgd_regression(name,
 ###################################################
 ##==== XGBoost hyperparameters search space ====##
 ###################################################
+
+def _lgbm_class_weight(name):
+	return hp.choice(name, [None, 'balanced'])
+
+def _lgbm_boosting_type(name):
+	return hp.choice(name, ['gbdt', 'dart','goss'])
+
+def _lgbm_num_leaves(name):
+	return scope.int(hp.quniform(name, 30, 150, 1))
+
+def _lgbm_learning_rate(name):
+	return hp.loguniform(name, np.log(0.01), np.log(0.2))	
+
+def _lgbm_subsample_for_bin(name):
+	return scope.int(hp.quniform(name, 20000, 300000, 20000))
+
+def _lgbm_min_child_samples(name):
+	return scope.int(hp.quniform(name, 20, 500, 5))
+
+def _lgbm_reg_alpha(name):
+	return hp.uniform(name, 0.0, 1.0)
+
+def _lgbm_reg_lambda(name):
+	return hp.uniform(name, 0.0, 1.0)
+
+def _lgbm_colsample_bytree(name):
+	return hp.uniform(name, 0.6, 1.0)
+
+
+def _lgbm_hp_space(
+    name_func,
+    class_weight=None,
+    boosting_type=None,
+    num_leaves=None,
+    learning_rate=None,
+    subsamples_for_bin=None,
+    min_child_samples=None,
+    reg_alpha=None,
+    reg_lambda=None,
+    colsample_bytree=None,
+    random_state=None,
+    n_jobs=1):
+
+	
+    '''Generate LGBM hyperparameters search space
+    '''
+    hp_space = dict(
+    	class_weight=(_lgbm_class_weight(name_func('class_weight'))
+    				if class_weight is None else class_weight),
+
+    	boosting_type=(_lgbm_boosting_type(name_func('boosting_type'))
+    				if boosting_type is None else boosting_type),
+
+    	num_leaves=(_lgbm_num_leaves(name_func('num_leaves'))
+    				if num_leaves is None else num_leaves),
+
+    	learning_rate=(_lgbm_learning_rate(name_func('learning_rate'))
+    				if learning_rate is None else learning_rate),
+
+    	subsample_for_bin=(_lgbm_subsample_for_bin(name_func('subsample_for_bin'))
+    				if subsamples_for_bin is None else subsamples_for_bin),
+
+    	min_child_samples=(_lgbm_min_child_samples(name_func('min_child_samples'))
+    				if min_child_samples is None else min_child_samples),
+
+    	reg_alpha=(_lgbm_reg_alpha(name_func('reg_alpha'))
+    				if reg_alpha is None else reg_alpha),
+
+    	reg_lambda=(_lgbm_reg_lambda(name_func('reg_lambda'))
+    				if reg_lambda is None else reg_lambda),
+
+    	colsample_bytree=(_lgbm_colsample_bytree(name_func('colsample_bytree'))
+    				if colsample_bytree is None else colsample_bytree),
+        n_jobs=n_jobs,
+        seed=_random_state(name_func('rstate'), random_state)
+    )
+    return hp_space
+
+def lgbm_regression(name, **kwargs):
+    '''
+    Return a pyll graph with hyperparameters that will construct
+    a LightGBM model.
+
+    Args:
+        objective([str]): choose from [
+                'reg:linear',
+                'count:poisson'
+            ]
+            or provide an hp.choice pyll node
+
+    See help(hpsklearn.components._xgboost_hp_space) for info on
+    additional available XGBoost arguments.
+    '''
+    def _name(msg):
+        return '%s.%s_%s' % (name, 'lgbm_reg', msg)
+
+    hp_space = _lgbm_hp_space(_name, **kwargs)
+    
+    return scope.sklearn_LGBMRegressor(**hp_space)
+
+
+
 
 def _xgboost_max_depth(name):
     return scope.int(hp.uniform(name, 1, 11))
