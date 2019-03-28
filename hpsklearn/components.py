@@ -27,6 +27,11 @@ try:
 except ImportError:
 	lightgbm = None
 
+try:
+	import catboost
+except ImportError:
+	catboost = None
+
 ##########################################
 ##==== Wrappers for sklearn modules ====##
 ##########################################
@@ -128,6 +133,12 @@ def sklearn_LGBMRegressor(*args, **kwargs):
     if lightgbm is None:
         raise ImportError('No module named lightgbm')
     return lightgbm.sklearn.LGBMRegressor(*args, **kwargs)
+
+@scope.define
+def sklearn_CatBoostRegressor(*args, **kwargs):
+    if catboost is None:
+        raise ImportError('No module named catboost')
+    return catboost.CatBoostRegressor(*args, **kwargs)
 
 # @scope.define
 # def sklearn_Ridge(*args, **kwargs):
@@ -1250,9 +1261,101 @@ def sgd_regression(name,
 #         )
 #     return rval
 
+def _catboost_learning_rate(name):
+	return hp.loguniform(name, np.log(0.01), np.log(0.8))
+
+def _catboost_max_depth(name):
+    return scope.int(hp.uniform(name, 1, 11))	
+
+def _catboost_colsample_bylevel(name):
+	return hp.uniform(name, 0.5, 1.0)
+
+def _catboost_bagging_temperature(name):
+	return hp.uniform(name, 0.0, 100)
+
+def _catboost_random_strength(name):
+	return hp.uniform(name, 0.0, 100)
+
+def _catboost_scale_pos_weight(name):
+	return hp.uniform(name, 1.0, 16.0)
+
+def _catboost_reg_lambda(name):
+	return hp.uniform(name, 0.0, 1.0)
+
+def _catboost_n_estimators(name):
+    return scope.int(hp.quniform(name, 100, 6000, 200))
+
+
+def _catboost_hp_space(
+    name_func,
+    learning_rate=None,
+    max_depth=None,
+    colsample_bylevel=None,
+    bagging_temperature=None,
+    random_strength=None,
+    reg_lambda=None,
+    n_estimators=None,
+    random_state=None,
+    n_jobs=1):
+
+	
+    '''Generate LGBM hyperparameters search space
+    '''
+    hp_space = dict(
+    	
+    	learning_rate=(_catboost_learning_rate(name_func('learning_rate'))
+    				if learning_rate is None else learning_rate),
+    	max_depth=(_catboost_max_depth(name_func('max_depth'))
+    				if max_depth is None else max_depth),
+    	colsample_bylevel=(_catboost_colsample_bylevel(name_func('colsample_bylevel'))
+    				if colsample_bylevel is None else colsample_bylevel),
+		bagging_temperature=(_catboost_bagging_temperature(name_func('bagging_temperature'))
+    				if bagging_temperature is None else bagging_temperature),
+
+		random_strength=(_catboost_random_strength(name_func('random_strength'))
+    				if random_strength is None else random_strength),
+
+
+    	reg_lambda=(_catboost_reg_lambda(name_func('reg_lambda'))
+    				if reg_lambda is None else reg_lambda),
+
+    	n_estimators=(_catboost_n_estimators(name_func('n_estimators'))
+    				if n_estimators is None else n_estimators),
+
+        thread_count=n_jobs,
+        random_seed=_random_state(name_func('rstate'), random_state)
+    )
+    return hp_space
+
+
+
+def catboost_regression(name, **kwargs):
+    '''
+    Return a pyll graph with hyperparameters that will construct
+    a LightGBM model.
+
+    Args:
+        objective([str]): choose from [
+                'reg:linear',
+                'count:poisson'
+            ]
+            or provide an hp.choice pyll node
+
+    See help(hpsklearn.components._xgboost_hp_space) for info on
+    additional available XGBoost arguments.
+    '''
+    def _name(msg):
+        return '%s.%s_%s' % (name, 'catboost_reg', msg)
+
+    hp_space = _catboost_hp_space(_name, **kwargs)
+    
+    return scope.sklearn_CatBoostRegressor(**hp_space)
+
+
+
 
 ###################################################
-##==== XGBoost hyperparameters search space ====##
+##==== LGBM hyperparameters search space ====##
 ###################################################
 
 def _lgbm_class_weight(name):
