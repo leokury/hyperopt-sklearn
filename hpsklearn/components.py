@@ -1282,6 +1282,12 @@ def _lgbm_reg_lambda(name):
 def _lgbm_colsample_bytree(name):
 	return hp.uniform(name, 0.6, 1.0)
 
+def _lgbm_max_depth(name):
+    return scope.int(hp.uniform(name, 1, 11))
+
+def _lgbm_n_estimators(name):
+    return scope.int(hp.quniform(name, 100, 6000, 200))
+
 
 def _lgbm_hp_space(
     name_func,
@@ -1294,6 +1300,8 @@ def _lgbm_hp_space(
     reg_alpha=None,
     reg_lambda=None,
     colsample_bytree=None,
+    max_depth=None,
+    n_estimators=None,
     random_state=None,
     n_jobs=1):
 
@@ -1327,6 +1335,13 @@ def _lgbm_hp_space(
 
     	colsample_bytree=(_lgbm_colsample_bytree(name_func('colsample_bytree'))
     				if colsample_bytree is None else colsample_bytree),
+
+    	max_depth=(_lgbm_max_depth(name_func('max_depth'))
+    				if max_depth is None else max_depth),
+
+    	n_estimators=(_lgbm_n_estimators(name_func('n_estimators'))
+    				if n_estimators is None else n_estimators),
+
         n_jobs=n_jobs,
         seed=_random_state(name_func('rstate'), random_state)
     )
