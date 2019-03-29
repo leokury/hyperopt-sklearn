@@ -1296,7 +1296,8 @@ def _catboost_hp_space(
     reg_lambda=None,
     n_estimators=None,
     random_state=None,
-    n_jobs=1):
+    n_jobs=None,
+    silent=True):
 
 	
     '''Generate LGBM hyperparameters search space
@@ -1321,8 +1322,8 @@ def _catboost_hp_space(
 
     	n_estimators=(_catboost_n_estimators(name_func('n_estimators'))
     				if n_estimators is None else n_estimators),
-
-        thread_count=n_jobs,
+    	thread_count=(n_jobs if n_jobs and n_jobs > 0 else None),
+    	silent = silent,
         random_seed=_random_state(name_func('rstate'), random_state)
     )
     return hp_space

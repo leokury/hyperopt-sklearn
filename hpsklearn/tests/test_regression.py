@@ -21,11 +21,11 @@ class TestRegression(unittest.TestCase):
 def create_function(reg_fn):
     def test_regressor(self):
         model = hyperopt_estimator(
-            regressor=reg_fn('regressor', n_jobs=None),
+            regressor=reg_fn('regressor'),
             preprocessing=[],
             algo=rand.suggest,
             trial_timeout=50.0,
-            max_evals=5,
+            max_evals=2,
             verbose=True
         )
         model.fit(self.X_train, self.Y_train)
