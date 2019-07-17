@@ -353,7 +353,7 @@ def _cost_fn(argd, X, y, EX_list, valid_size, n_folds, shuffle, random_state,
                 # Use a user specified loss function
                 loss = loss_fn(cv_y_pool, cv_pred_pool)
                 lossvar = None
-                info('OK trial with loss %.1f' % loss)
+                info('OK trial with loss %f' % loss)
             t_done = time.time()
             rval = {
                 'loss': loss,
