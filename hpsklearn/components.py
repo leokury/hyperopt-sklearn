@@ -1558,7 +1558,7 @@ def _xgboost_hp_space(
 ########################################################
 ##==== XGBoost classifier/regressor constructors ====##
 ########################################################
-def xgboost_classification(name, objective='binary:logistic', **kwargs):
+def xgboost_classification(name, objective='binary:logistic', tree_method='auto', **kwargs):
     '''
     Return a pyll graph with hyperparameters that will construct
     a xgboost.XGBClassifier model.
@@ -1575,6 +1575,7 @@ def xgboost_classification(name, objective='binary:logistic', **kwargs):
 
     hp_space = _xgboost_hp_space(_name, **kwargs)
     hp_space['objective'] = objective
+    hp_space['tree_method'] = tree_method
     return scope.sklearn_XGBClassifier(**hp_space)
 
 
