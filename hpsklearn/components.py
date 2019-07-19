@@ -140,6 +140,12 @@ def sklearn_CatBoostRegressor(*args, **kwargs):
         raise ImportError('No module named catboost')
     return catboost.CatBoostRegressor(*args, **kwargs)
 
+@scope.define
+def sklearn_CatBoostClassifier(*args, **kwargs):
+    if catboost is None:
+        raise ImportError('No module named catboost')
+    return catboost.CatBoostClassifier(*args, **kwargs)
+
 # @scope.define
 # def sklearn_Ridge(*args, **kwargs):
 #     return sklearn.linear_model.Ridge(*args, **kwargs)
@@ -1330,7 +1336,7 @@ def _catboost_hp_space(
 
 
 
-def catboost_regression(name, **kwargs):
+def catboost_regression(name, task_type="CPU", **kwargs):
     '''
     Return a pyll graph with hyperparameters that will construct
     a LightGBM model.
@@ -1349,8 +1355,32 @@ def catboost_regression(name, **kwargs):
         return '%s.%s_%s' % (name, 'catboost_reg', msg)
 
     hp_space = _catboost_hp_space(_name, **kwargs)
+    hp_space["task_type"] = task_type
     
     return scope.sklearn_CatBoostRegressor(**hp_space)
+
+def catboost_classification(name, task_type="CPU", **kwargs):
+    '''
+    Return a pyll graph with hyperparameters that will construct
+    a LightGBM model.
+
+    Args:
+        objective([str]): choose from [
+                'reg:linear',
+                'count:poisson'
+            ]
+            or provide an hp.choice pyll node
+
+    See help(hpsklearn.components._xgboost_hp_space) for info on
+    additional available XGBoost arguments.
+    '''
+    def _name(msg):
+        return '%s.%s_%s' % (name, 'catboost_reg', msg)
+
+    hp_space = _catboost_hp_space(_name, **kwargs)
+    hp_space["task_type"] = task_type
+    
+    return scope.sklearn_CatBoostClassifier(**hp_space)
 
 
 
@@ -1558,7 +1588,7 @@ def _xgboost_hp_space(
 ########################################################
 ##==== XGBoost classifier/regressor constructors ====##
 ########################################################
-def xgboost_classification(name, objective='binary:logistic', tree_method='auto', **kwargs):
+def xgboost_classification(name, objective='binary:logistic', tree_method='auto', eval_metric=None, **kwargs):
     '''
     Return a pyll graph with hyperparameters that will construct
     a xgboost.XGBClassifier model.
@@ -1576,6 +1606,7 @@ def xgboost_classification(name, objective='binary:logistic', tree_method='auto'
     hp_space = _xgboost_hp_space(_name, **kwargs)
     hp_space['objective'] = objective
     hp_space['tree_method'] = tree_method
+    hp_space['eval_metric'] = eval_metric
     return scope.sklearn_XGBClassifier(**hp_space)
 
 
