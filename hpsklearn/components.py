@@ -1336,7 +1336,7 @@ def _catboost_hp_space(
 
 
 
-def catboost_regression(name, task_type="CPU", **kwargs):
+def catboost_regression(name, task_type="CPU", eval_metric=None, **kwargs):
     '''
     Return a pyll graph with hyperparameters that will construct
     a LightGBM model.
@@ -1356,10 +1356,13 @@ def catboost_regression(name, task_type="CPU", **kwargs):
 
     hp_space = _catboost_hp_space(_name, **kwargs)
     hp_space["task_type"] = task_type
+    if task_type == "GPU":
+        hp_space["rsm"] = float("nan")
+    hp_space["eval_metric"] = eval_metric
     
     return scope.sklearn_CatBoostRegressor(**hp_space)
 
-def catboost_classification(name, task_type="CPU", **kwargs):
+def catboost_classification(name, task_type="CPU", eval_metric=None, **kwargs):
     '''
     Return a pyll graph with hyperparameters that will construct
     a LightGBM model.
@@ -1379,6 +1382,12 @@ def catboost_classification(name, task_type="CPU", **kwargs):
 
     hp_space = _catboost_hp_space(_name, **kwargs)
     hp_space["task_type"] = task_type
+
+    if task_type == "GPU":
+        hp_space["rsm"] = float("nan")
+
+    hp_space["eval_metric"] = eval_metric
+
     
     return scope.sklearn_CatBoostClassifier(**hp_space)
 
