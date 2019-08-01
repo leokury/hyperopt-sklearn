@@ -1294,6 +1294,7 @@ def _catboost_n_estimators(name):
 
 def _catboost_hp_space(
     name_func,
+    task_type,
     learning_rate=None,
     max_depth=None,
     colsample_bylevel=None,
@@ -1315,7 +1316,7 @@ def _catboost_hp_space(
     	max_depth=(_catboost_max_depth(name_func('max_depth'))
     				if max_depth is None else max_depth),
     	colsample_bylevel=(_catboost_colsample_bylevel(name_func('colsample_bylevel'))
-    				if colsample_bylevel is None else colsample_bylevel),
+    				if colsample_bylevel is None and task_type != "GPU" else colsample_bylevel),
 		bagging_temperature=(_catboost_bagging_temperature(name_func('bagging_temperature'))
     				if bagging_temperature is None else bagging_temperature),
 
@@ -1354,10 +1355,8 @@ def catboost_regression(name, task_type="CPU", eval_metric=None, **kwargs):
     def _name(msg):
         return '%s.%s_%s' % (name, 'catboost_reg', msg)
 
-    hp_space = _catboost_hp_space(_name, **kwargs)
+    hp_space = _catboost_hp_space(_name, task_type, **kwargs)
     hp_space["task_type"] = task_type
-    if task_type == "GPU":
-        hp_space["rsm"] = float("nan")
     hp_space["eval_metric"] = eval_metric
     
     return scope.sklearn_CatBoostRegressor(**hp_space)
@@ -1380,12 +1379,8 @@ def catboost_classification(name, task_type="CPU", eval_metric=None, **kwargs):
     def _name(msg):
         return '%s.%s_%s' % (name, 'catboost_reg', msg)
 
-    hp_space = _catboost_hp_space(_name, **kwargs)
+    hp_space = _catboost_hp_space(_name, task_type, **kwargs)
     hp_space["task_type"] = task_type
-
-    if task_type == "GPU":
-        hp_space["rsm"] = float("nan")
-
     hp_space["eval_metric"] = eval_metric
 
     
